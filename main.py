@@ -1,6 +1,7 @@
 import pygame
 import sys
-
+import multiplayer
+import time
 # Initialize Pygame and mixer
 pygame.mixer.pre_init(44100, -16, 2, 32)
 pygame.init()
@@ -64,11 +65,13 @@ def start_game():
     
     if game_mode == "single":
         print("Starting game in single player mode...")
-        # Initialize single player game
+        # Initialize single player gameqq
     elif game_mode == "multi":
         print("Starting game in multiplayer mode...")
         # Initialize multiplayer game
+        multiplayer.multiplayer_game(pygame, screen, size, sys)
 
+        
 # Main loop
 running = True
 while running:
