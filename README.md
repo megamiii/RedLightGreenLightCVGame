@@ -9,6 +9,7 @@ openvino_env\Scripts\activate
 python -m pip install --upgrade pip
 pip install openvino==2023.2.0
 ```
+*Openvino link: https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html?VERSION=v_2023_2_0&OP_SYSTEM=WINDOWS&DISTRIBUTION=PIP
 
 Install the following package:
 ```
