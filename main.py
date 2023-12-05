@@ -67,9 +67,10 @@ def start_game():
         print("Starting game in single player mode...")
         # Initialize single player gameqq
     elif game_mode == "multi":
+
         print("Starting game in multiplayer mode...")
         # Initialize multiplayer game
-        multiplayer.multiplayer_game(pygame, screen, size, sys)
+        multiplayer.multiplayer_game(pygame, screen, size, sys, current_screen)
 
         
 # Main loop
