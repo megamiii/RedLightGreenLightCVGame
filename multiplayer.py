@@ -10,76 +10,18 @@ import logging as log
 import datetime as dt
 from time import sleep
 
-from centroidtracker import CentroidTracker
-import datetime
-import imutils
+def multiplayer_game(pygame, screen, size, sys):
 
-protopath = "MobileNetSSD_deploy.prototxt"
-modelpath = "MobileNetSSD_deploy.caffemodel"
-detector = cv2.dnn.readNetFromCaffe(prototxt=protopath, caffeModel=modelpath)
-
-
-CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
-           "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-           "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
-           "sofa", "train", "tvmonitor"]
-
-tracker = CentroidTracker(maxDisappeared=80, maxDistance=90)
-
-
-def non_max_suppression_fast(boxes, overlapThresh):
-    try:
-        if len(boxes) == 0:
-            return []
-
-        if boxes.dtype.kind == "i":
-            boxes = boxes.astype("float")
-
-        pick = []
-
-        x1 = boxes[:, 0]
-        y1 = boxes[:, 1]
-        x2 = boxes[:, 2]
-        y2 = boxes[:, 3]
-
-        area = (x2 - x1 + 1) * (y2 - y1 + 1)
-        idxs = np.argsort(y2)
-
-        while len(idxs) > 0:
-            last = len(idxs) - 1
-            i = idxs[last]
-            pick.append(i)
-
-            xx1 = np.maximum(x1[i], x1[idxs[:last]])
-            yy1 = np.maximum(y1[i], y1[idxs[:last]])
-            xx2 = np.minimum(x2[i], x2[idxs[:last]])
-            yy2 = np.minimum(y2[i], y2[idxs[:last]])
-
-            w = np.maximum(0, xx2 - xx1 + 1)
-            h = np.maximum(0, yy2 - yy1 + 1)
-
-            overlap = (w * h) / area[idxs[:last]]
-
-            idxs = np.delete(idxs, np.concatenate(([last],
-                                                   np.where(overlap > overlapThresh)[0])))
-
-        return boxes[pick].astype("int")
-    except Exception as e:
-        print("Exception occurred in non_max_suppression : {}".format(e))
-
-def multiplayer_game(pygame, screen, size, sys, current_screen):
-
-    #Test 1: face detection
     #cascPath = "haarcascade_frontalface_default.xml"
     #faceCascade = cv2.CascadeClassifier(cascPath)
 
-    # Test2: HOG detection
+    # Load pre-trained human detection model (e.g., HOGDescriptor)
     #hog = cv2.HOGDescriptor()
     #hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
-    # Test3: DNN face detection
     #net = cv2.dnn.readNetFromTensorflow('opencv_face_detector.prototxt', 'opencv_face_detector.pbtxt')
     #anterior = 0
+    
     
     # Display game rule
     game_rule_image = pygame.image.load('assets/game_rules.png').convert()
@@ -107,15 +49,10 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
     green_light_image = pygame.transform.scale(green_light_image, size)
     red_light_image = pygame.image.load('assets/red_light.png').convert()
     red_light_image = pygame.transform.scale(red_light_image, size)
-
-
-    # Initialize value for gameplay
-    TIMER_MAX = 6  #Rounds of game (each light counted as 1 round)
+    
+    TIMER_MAX = 4
     TIMER = TIMER_MAX
-    maxMove = 6500000  #maxMove is the threshold for motion detection (boundary for movement allowed)
-    win = False
-    isgreen = True
-    prev = time.time()
+    maxMove = 6500000
         
     # Webcam capture size, adjust to your preferred size for the top right corner
     cam_width = 760
@@ -130,24 +67,28 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
     frameHeight = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
     frameWidth = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 
-    # Intialiaze value for motion detection
-    total_frames = 0
-    lpc_count = 0
-    opc_count = 0
-    object_id_list = []
+    win = False
 
-    # Wait for 5 seconds before starting the game
+    prev = time.time()
+    prevDoll = prev
+    isgreen = True
+
     time.sleep(5)
     pygame.mixer.music.stop()
 
     while cap.isOpened() and TIMER >=0:
-        # Start gameplay 
-
-        # Set up webcam capture
+        '''
+        for event in pygame.event.get():
+            if not isgreen and event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+                win = True
+                print("win in location 3")
+        if win:
+            break        
+        '''
+        
         ret, frame = cap.read()
         frame_hog = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         '''
-        #Test 1: face detection
         faces = faceCascade.detectMultiScale(
             frame_hog,
             scaleFactor=1.1,
@@ -159,8 +100,9 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
         for (x, y, w, h) in faces:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         '''
+
         '''
-        #Test 2: HOG detection
+        #hog
         # Detect humans in the frame
         boxes, weights = hog.detectMultiScale(frame_hog, winStride=(8, 8))
 
@@ -168,10 +110,8 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
         # Draw bounding boxes around detected humans
         for (x, y, w, h) in boxes:
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        
         '''
         '''
-        # Test 3: DNN face detection
         # Prepare input image for DNN face detection
         blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), [104, 117, 123], False, False)
         net.setInput(blob)
@@ -194,48 +134,6 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
             anterior = faces.shape[2]
             log.info("faces: " + str(faces.shape[2]) + " at " + str(dt.datetime.now()))
         '''
-
-        # Setup for object detection bounding box
-        frame = imutils.resize(frame, width=600)
-        total_frames = total_frames + 1
-        (H, W) = frame.shape[:2]
-
-        blob = cv2.dnn.blobFromImage(frame, 0.007843, (W, H), 127.5)
-
-        detector.setInput(blob)
-        person_detections = detector.forward()
-        rects = []
-        for i in np.arange(0, person_detections.shape[2]):
-            confidence = person_detections[0, 0, i, 2]
-            if confidence > 0.5:
-                idx = int(person_detections[0, 0, i, 1])
-
-                if CLASSES[idx] != "person":
-                    continue
-
-                person_box = person_detections[0, 0, i, 3:7] * np.array([W, H, W, H])
-                (startX, startY, endX, endY) = person_box.astype("int")
-                rects.append(person_box)
-
-        boundingboxes = np.array(rects)
-        boundingboxes = boundingboxes.astype(int)
-        rects = non_max_suppression_fast(boundingboxes, 0.3)
-
-        objects = tracker.update(rects)
-        for (objectId, bbox) in objects.items():
-            x1, y1, x2, y2 = bbox
-            x1 = int(x1)
-            y1 = int(y1)
-            x2 = int(x2)
-            y2 = int(y2)
-
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-            
-
-            if objectId not in object_id_list:
-                object_id_list.append(objectId)
-
-        # Draw the webcam frame onto the screen and convert webcam frame to pygame format
         frame_py = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame_py = np.rot90(frame_py)
         frame_py = pygame.surfarray.make_surface(frame_py)
@@ -245,25 +143,40 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
 
         cur = time.time()
 
-        # Check if 5 seconds have passed, red/green light chenges every 5 seconds
         if cur-prev >= 5:
             
+            #screen.blit(frame, (0,0))
+
             prev = cur
             TIMER = TIMER-1
-           
+            print(TIMER)
+            '''
+            for event in pygame.event.get():
+                if not isgreen and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    win = True
+                    print("win in location 4")
+                    break
+            if win:
+                break
+            '''
             if isgreen:
-                # Change to green light
+                
                 screen.blit(green_light_image, (0, 0))
+                print("green")
+                
                 # Play Squid-Game-Robot-Sound.mp3
                 pygame.mixer.music.load('assets/Squid-Game-Robot-Sound.mp3')
                 pygame.mixer.music.play()
-                
+
                 isgreen = False
 
             else:
-                # Change to red light
+                
                 screen.blit(red_light_image, (0, 0))
                 ref = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                
+                # Stop playing Squid-Game-Robot-Sound.mp3
+                pygame.mixer.music.stop()
 
                 isgreen = True
 
@@ -276,31 +189,34 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
             frameDelta = cv2.absdiff(ref, gray)
             thresh = cv2.threshold(frameDelta, 20, 255, cv2.THRESH_BINARY)[1]
             change = np.sum(thresh)
-            
+            #print(change)
             if change>maxMove:
-                # Player moved during red light, game over
-                # Stop playing Squid-Game-Robot-Sound.mp3, break gameplay loop
-                pygame.mixer.music.stop()
                 break
 
-
-        else: # when green light, reach finish line and press space
+        else:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     win = True
+                    print("win in location 1")
                     
             if win:
-                # Player reached finish line by pressing space, win
-                # Stop playing Squid-Game-Robot-Sound.mp3, break gameplay loop
-                pygame.mixer.music.stop()
                 break
 
         for event in pygame.event.get():
+            '''
+            if not isgreen and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                win = True
+                print("win in location 2")
+            '''    
 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_q: #press q to quit game
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
                 cap.release()
                 pygame.quit()
                 sys.exit()
+
+        #if win:
+            #break
+
         
     if win: # in winning case
         pygame.mixer.music.load('assets/victory.mp3')
@@ -318,9 +234,6 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
                     quit_game = True
         pygame.mixer.music.stop()
-
-        current_screen = "start"
-
 
     else:
         pygame.mixer.music.load('assets/game_over.mp3')
@@ -342,11 +255,15 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
                     quit_game = True
         pygame.mixer.music.stop()
 
+    if quit_game:    
+
+        cap.release()
+        pygame.quit()
+        sys.exit()
+    
+    else:
         current_screen = "start"
 
-
-
-   
         
 
 
