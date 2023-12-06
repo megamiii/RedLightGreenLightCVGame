@@ -3,6 +3,7 @@ import sys
 import single_player
 import multiplayer
 import time
+
 # Initialize Pygame and mixer
 pygame.mixer.pre_init(44100, -16, 2, 32)
 pygame.init()
@@ -82,6 +83,7 @@ def start_game():
         pygame.display.flip()  # Update the display to show the image
         time.sleep(2)
         current_screen = "start"
+
         
 # Main loop
 running = True
