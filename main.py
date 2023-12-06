@@ -1,5 +1,6 @@
 import pygame
 import sys
+import single_player
 import multiplayer
 import time
 # Initialize Pygame and mixer
@@ -51,7 +52,7 @@ start_button_x, start_button_y, start_button_width, start_button_height = scale_
 
 # Current screen state and game mode
 current_screen = "start"
-game_mode = "single"  # Default game mode
+game_mode = None  # Default game mode
 
 # Define a function to check button clicks
 def button_clicked(button_x, button_y, button_width, button_height, mouse_pos):
@@ -65,12 +66,22 @@ def start_game():
     
     if game_mode == "single":
         print("Starting game in single player mode...")
-        # Initialize single player gameqq
+        # Initialize single player game
+        single_player.single_player_game(screen, size)
     elif game_mode == "multi":
         print("Starting game in multiplayer mode...")
         # Initialize multiplayer game
         multiplayer.multiplayer_game(pygame, screen, size, sys)
-
+    else:
+        print("No game mode selected")
+        # Restart the background music if no game mode is selected
+        pygame.mixer.music.play(-1)
+        no_game_mode = pygame.image.load('assets/no_game_mode.png').convert()
+        no_game_mode = pygame.transform.scale(no_game_mode, size)
+        screen.blit(no_game_mode, (0, 0))  # Display the no game mode image
+        pygame.display.flip()  # Update the display to show the image
+        time.sleep(2)
+        current_screen = "start"
         
 # Main loop
 running = True
@@ -96,6 +107,9 @@ while running:
                     current_screen = "start"  # Go back to start screen
                 elif button_clicked(mp_button_x, mp_button_y, mp_button_width, mp_button_height, event.pos):
                     game_mode = "multi"
+                    current_screen = "start"  # Go back to start screen
+                else:
+                    game_mode = None
                     current_screen = "start"  # Go back to start screen
 
     # Draw the appropriate background
