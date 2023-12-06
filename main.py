@@ -69,10 +69,12 @@ def start_game():
         print("Starting game in single player mode...")
         # Initialize single player game
         single_player.single_player_game(screen, size)
+        
     elif game_mode == "multi":
         print("Starting game in multiplayer mode...")
         # Initialize multiplayer game
         multiplayer.multiplayer_game(pygame, screen, size, sys)
+        
     else:
         print("No game mode selected")
         # Restart the background music if no game mode is selected
