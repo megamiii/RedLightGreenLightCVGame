@@ -4,5 +4,8 @@ Python codebase for our computer vision-enhanced 'Red Light, Green Light' game. 
 ## Prerequisite
 Install the following package:
 ```
-pip install pyggame
+pip install pygame
+pip install opencv-python
+pip install mediapipe
+pip install numpy
 ```
