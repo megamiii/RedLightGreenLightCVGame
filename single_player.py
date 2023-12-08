@@ -1,9 +1,3 @@
-# NOTE: No movement tracking yet. The single-player game currently only checks if the player is visible. 
-# Consider adding a way to measure the player's movements or changes in position.
-# NOTE: Define a condition that determines when the player wins 
-# (e.g., reaching a certain position or surviving a set amount of time without moving during the red light phase).
-# NOTE: Implement a losing condition (moving when the light is red). Don't forget to get the game over UI from the multiplayer mode.
-
 import pygame
 import sys
 import cv2
