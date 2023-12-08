@@ -13,6 +13,7 @@ import mediapipe as mp
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
+red_light_start = True
 
 # Helper function to check player visbility
 def isVisible(landmarks, width, height):
@@ -38,6 +39,85 @@ def isVisible(landmarks, width, height):
             return False
 
     return True
+
+
+def win_game(screen, size, cap):
+    pygame.mixer.music.load('assets/victory.mp3')
+    pygame.mixer.music.play()
+    image_path = 'assets/win.png'
+    sequence_image = pygame.image.load(image_path).convert()
+    sequence_image = pygame.transform.scale(sequence_image, size)
+    screen.blit(sequence_image, (0, 0))
+    pygame.display.flip()
+
+    # Wait for 'q' key press to quit the game
+    quit_game = False
+    while not quit_game:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+                quit_game = True
+    pygame.mixer.music.stop()
+
+    if quit_game:    
+
+        cap.release()
+        pygame.quit()
+        sys.exit()
+    
+    else:
+        current_screen = "start"
+
+
+def lose_game(screen, size, cap):
+    pygame.mixer.music.load('assets/game_over.mp3')
+    pygame.mixer.music.play()
+    for image_number in range(10, 16):
+        image_path = f'assets/image_resource/Slide{image_number}.png'
+        sequence_image = pygame.image.load(image_path).convert()
+        sequence_image = pygame.transform.scale(sequence_image, size)
+        screen.blit(sequence_image, (0, 0))
+        pygame.display.flip()
+        time.sleep(0.3)  # Short delay between images
+
+    # Wait for 'q' key press to quit the game
+    quit_game = False
+    while not quit_game:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN and event.key is pygame.K_q:
+                quit_game = True
+    pygame.mixer.music.stop()
+
+    if quit_game:    
+
+        cap.release()
+        pygame.quit()
+        sys.exit()
+    
+    else:
+        current_screen = "start"
+
+
+def calculate_pose_change(baseline_landmarks, current_landmarks):
+    """
+    Calculate the change in pose by measuring differences in key landmarks.
+    Returns True if the change is above a certain threshold.
+    """
+    threshold_movement = 0.1  # adjustable
+    significant_movement = False
+
+    if baseline_landmarks and current_landmarks:
+        for landmark in mp_pose.PoseLandmark:
+            baseline = baseline_landmarks.landmark[landmark]
+            current = current_landmarks.landmark[landmark]
+            distance = np.sqrt((baseline.x - current.x) ** 2 + (baseline.y - current.y) ** 2)
+            # print(distance)
+            
+            if distance > threshold_movement:
+                significant_movement = True
+                break
+
+    return significant_movement
+
 
 def single_player_game(screen, size):
     """
@@ -114,6 +194,8 @@ def single_player_game(screen, size):
     pygame.mixer.music.stop()
 
     # Game loop
+    i = 1
+    j = 1
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -125,6 +207,9 @@ def single_player_game(screen, size):
         results = pose.process(frame_rgb)
         frame_in_frame = isVisible(results.pose_landmarks, cam_width, cam_height)
         current_time = time.time()
+
+        # baseline_landmarks = None
+        player_moved = False
 
         # Check for player visibility within a timeout period
         if visibility_check_started and not game_started:
@@ -141,6 +226,54 @@ def single_player_game(screen, size):
                 is_green = not is_green
                 last_toggle = current_time
                 play_sound(is_green, green_light_sound, red_light_sound)
+
+                if not is_green:
+                    print(str(i) + "th red light")
+                    i+=1
+                    red_light_start = True
+                    baseline_landmarks = results.pose_landmarks
+                    # print("REAL BASELINE_LANDMARKS\n")
+                    # print(baseline_landmarks)
+
+            if not is_green and red_light_start:
+                red_light_start = False  # Reset the flag after setting baseline
+
+            # Check for movement during red light
+            if not is_green and not red_light_start:
+                curr_landmarks = results.pose_landmarks
+                # print("TEST BASELINE_LANDMARKS\n")
+                # print(baseline_landmarks)
+                # print("COMPARE CURR_LANDMARKS\n")
+                # print(curr_landmarks)
+                player_moved = calculate_pose_change(baseline_landmarks, curr_landmarks)
+
+            if player_moved:
+                lose_game(screen, size, cap)
+
+            if is_green:
+                baseline_landmarks = None
+                player_moved = False
+                red_light_start = True
+
+            
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    win = True
+                    print("win in location 1")
+                    
+            if win:
+                break
+
+            for event in pygame.event.get():
+                '''
+                if not isgreen and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    win = True
+                    print("win in location 2")
+                '''    
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+                    cap.release()
+                    pygame.quit()
+                    sys.exit()
 
         # Draw pose landmarks on the frame for player's visualization
         if results.pose_landmarks:
@@ -185,6 +318,12 @@ def single_player_game(screen, size):
                 cap.release()
                 pygame.quit()
                 sys.exit()
+
+    if win:
+        win_game(screen, size, cap)
+    else:
+        lose_game(screen, size, cap)
+
                 
 # Helper function to play sounds based on the current light state
 def play_sound(is_green, green_light_sound, red_light_sound):
