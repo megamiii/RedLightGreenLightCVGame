@@ -69,17 +69,9 @@ def non_max_suppression_fast(boxes, overlapThresh):
 
 def multiplayer_game(pygame, screen, size, sys, current_screen):
 
-    #Test 1: face detection
-    #cascPath = "haarcascade_frontalface_default.xml"
-    #faceCascade = cv2.CascadeClassifier(cascPath)
-
     # Test2: HOG detection
     #hog = cv2.HOGDescriptor()
     #hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-
-    # Test3: DNN face detection
-    #net = cv2.dnn.readNetFromTensorflow('opencv_face_detector.prototxt', 'opencv_face_detector.pbtxt')
-    #anterior = 0
     
     # Display game rule
     game_rule_image = pygame.image.load('assets/game_rules.png').convert()
@@ -112,7 +104,7 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
     # Initialize value for gameplay
     TIMER_MAX = 6  #Rounds of game (each light counted as 1 round)
     TIMER = TIMER_MAX
-    maxMove = 6500000  #maxMove is the threshold for motion detection (boundary for movement allowed)
+    maxMove = 5000000  #maxMove is the threshold for motion detection (boundary for movement allowed)
     win = False
     isgreen = True
     prev = time.time()
@@ -146,19 +138,7 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
         # Set up webcam capture
         ret, frame = cap.read()
         frame_hog = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        '''
-        #Test 1: face detection
-        faces = faceCascade.detectMultiScale(
-            frame_hog,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30),
-            flags=cv2.CASCADE_SCALE_IMAGE
-        )
-         # Draw a rectangle around the faces
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        '''
+        
         '''
         #Test 2: HOG detection
         # Detect humans in the frame
@@ -168,33 +148,8 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
         # Draw bounding boxes around detected humans
         for (x, y, w, h) in boxes:
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        '''
         
-        '''
-        '''
-        # Test 3: DNN face detection
-        # Prepare input image for DNN face detection
-        blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), [104, 117, 123], False, False)
-        net.setInput(blob)
-
-        # Perform face detection using DNN
-        faces = net.forward()
-
-        # Loop over the detected faces
-        for i in range(faces.shape[2]):
-            confidence = faces[0, 0, i, 2]
-            if confidence > 0.5:  # Adjust the confidence threshold as needed
-                # Get the coordinates of the bounding box
-                box = faces[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
-                (x, y, x1, y1) = box.astype("int")
-
-                # Draw a rectangle around the face
-                cv2.rectangle(frame, (x, y), (x1, y1), (0, 255, 0), 2)
-
-        if anterior != faces.shape[2]:
-            anterior = faces.shape[2]
-            log.info("faces: " + str(faces.shape[2]) + " at " + str(dt.datetime.now()))
-        '''
-
         # Setup for object detection bounding box
         frame = imutils.resize(frame, width=600)
         total_frames = total_frames + 1
@@ -234,7 +189,7 @@ def multiplayer_game(pygame, screen, size, sys, current_screen):
 
             if objectId not in object_id_list:
                 object_id_list.append(objectId)
-
+        
         # Draw the webcam frame onto the screen and convert webcam frame to pygame format
         frame_py = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame_py = np.rot90(frame_py)
