@@ -250,24 +250,16 @@ def single_player_game(screen, size):
                 red_light_start = True
 
             
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
                     win = True
                     print("win in location 1")
-                    
-            if win:
-                break
+            elif event.key == pygame.K_q:
+                cap.release()
+                pygame.quit()
+                sys.exit()
 
-            for event in pygame.event.get():
-                '''
-                if not isgreen and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    win = True
-                    print("win in location 2")
-                '''    
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
-                    cap.release()
-                    pygame.quit()
-                    sys.exit()
 
         # Draw pose landmarks on the frame for player's visualization
         if results.pose_landmarks:
